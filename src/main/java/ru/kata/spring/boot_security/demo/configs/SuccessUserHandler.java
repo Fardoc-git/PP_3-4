@@ -2,19 +2,16 @@ package ru.kata.spring.boot_security.demo.configs;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
 
 @Component
 public class SuccessUserHandler implements AuthenticationSuccessHandler {
@@ -47,7 +44,7 @@ public class SuccessUserHandler implements AuthenticationSuccessHandler {
         if(isUser) {
             return "user/user-list_";
         } else if (isAdmin) {
-            return "admin/user_list";
+            return "admin/user-list";
         } else {
             return "login";
         }
