@@ -42,9 +42,9 @@ public class SuccessUserHandler implements AuthenticationSuccessHandler {
         }
 
         if(isUser) {
-            return "user/user-list_";
+            return "/user";
         } else if (isAdmin) {
-            return "admin/user-list";
+            return "/admin";
         } else {
             return "login";
         }

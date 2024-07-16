@@ -1,69 +1,34 @@
 package ru.kata.spring.boot_security.demo.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
 import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.repository.UserRepository;
+
 import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service
-public class UserService implements UserDetailsService {
+public interface UserService extends UserDetailsService {
+    //    @Transactional
+    User findByLastName(String lastname);
 
-    private final UserRepository userRepository;
+    //    @Transactional
+    Optional<User> findById(Long id);
 
-    @Autowired
-    public UserService(UserRepository userRepository, User user) {
-        this.userRepository = userRepository;
-    }
-
-    @Transactional
-    public User findByLastName(String lastname) {
-        return userRepository.findByLastName(lastname);
-    }
+    //    @Transactional
+    List<User> findAll();
 
     @Transactional
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
-    }
+    void saveUser(User user);
 
     @Transactional
-    public List<User> findAll() {
-        return userRepository.findAll();
-    }
+    void deleteById(Long id);
 
-    @Transactional
-    public void saveUser(User user) {
-        userRepository.save(user);
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        userRepository.deleteById(id);
-    }
-
-    @Transactional
-    @Override
-    public UserDetails loadUserByUsername(String name) throws UsernameNotFoundException {
-        User user = findByLastName(name);
-        if (user == null) {
-            throw new UsernameNotFoundException("%s not found".formatted(name));
-        }
-        return new org.springframework.security.core.userdetails.User(user.getLastName(),
-                user.getPassword(),
-                getGrantedAuthorities(user.getRoles()));
-    }
-
-    private Collection<? extends GrantedAuthority> getGrantedAuthorities(Collection<Role> roles) {
+    default Collection<? extends GrantedAuthority> getGrantedAuthorities(Collection<Role> roles) {
         return roles
                 .stream()
                 .map(r -> new SimpleGrantedAuthority(r.getRole())).collect(Collectors.toList());
