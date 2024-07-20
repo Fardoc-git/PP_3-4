@@ -1,67 +1,30 @@
 package ru.kata.spring.boot_security.demo.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import ru.kata.spring.boot_security.demo.model.User;
-import ru.kata.spring.boot_security.demo.service.RoleService;
-import ru.kata.spring.boot_security.demo.service.UserService;
-import java.security.Principal;
 
-@Controller
+import javax.servlet.http.HttpServletRequest;
+
+@RestController
+@RequestMapping("/user")
 public class UserController {
-
-    private final UserService userService;
-    private final RoleService roleService;
-
-//    @Autowired
-    public UserController(UserService userService, RoleService roleService) {
-        this.userService = userService;
-        this.roleService = roleService;
+    @GetMapping("/userList")
+    public ResponseEntity<User> showAuthUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/admin")
-    public ModelAndView startAdmin(Principal currentUser) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("curUser", userService.findByLastName(currentUser.getName()));
-        modelAndView.addObject("users", userService.findAll());
-        modelAndView.addObject("roles", roleService.findAllRoles());
-        modelAndView.addObject("newUser", new User());
-        modelAndView.setViewName("admin");
-        return modelAndView;
-    }
-
-    @PostMapping("/admin/createUser")
-    public ModelAndView createUser(@ModelAttribute("newUser") User user) {
-        ModelAndView modelAndView = new ModelAndView();
-        userService.saveUser(user);
-        modelAndView.setViewName("redirect:/admin");
-        return modelAndView;
-    }
-
-
-    @PostMapping("/admin/updateUser")
-    public ModelAndView updateUser(User user) {
-        ModelAndView modelAndView = new ModelAndView();
-        userService.saveUser(user);
-        modelAndView.setViewName("redirect:/admin");
-        return modelAndView;
-    }
-
-
-    @PostMapping("/admin/deleteUser")
-    public ModelAndView deleteUser(@RequestParam Long id) {
-        ModelAndView modelAndView = new ModelAndView();
-        userService.deleteById(id);
-        modelAndView.setViewName("redirect:/admin");
-        return modelAndView;
-    }
-
-    @GetMapping("/user")
-    public ModelAndView startUser(Principal currentUser) {
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("curUser", userService.findByLastName(currentUser.getName()));
-        modelAndView.setViewName("user");
-        return modelAndView;
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            request.getSession().invalidate();
+        }
+        return "redirect:/login";
     }
 }

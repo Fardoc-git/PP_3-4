@@ -1,53 +1,55 @@
 package ru.kata.spring.boot_security.demo.configs;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+@RequiredArgsConstructor
+public class SecurityConfig {
+    private final UserService userService;
+    private final SuccessUserHandler successUserHandler;
 
-    private UserService userService;
-
-    @Autowired
-    public SecurityConfig(UserService userService) {
-        this.userService = userService;
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf()
-                .disable()
+                .csrf().disable()
+                .cors().disable()
                 .authorizeRequests()
-                .antMatchers("/admin/**").hasRole("ADMIN")
-                .antMatchers("/user/**").hasRole("USER")
+                .antMatchers("/").permitAll()
+                .antMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+                .antMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
                 .and()
-                .formLogin()
-                .successHandler((new SuccessUserHandler()))
+                .formLogin().loginPage("/login").successHandler(successUserHandler)
                 .permitAll()
                 .and()
-                .logout().logoutUrl("/logout")
-                .logoutSuccessUrl("/login");
+                .logout().logoutSuccessUrl("/");
+        return http.build();
     }
 
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        return authenticationProvider;
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setUserDetailsService(userService);
+        return daoAuthenticationProvider;
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }

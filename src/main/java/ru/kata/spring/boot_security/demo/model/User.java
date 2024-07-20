@@ -1,20 +1,25 @@
 package ru.kata.spring.boot_security.demo.model;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
+
 import javax.persistence.*;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
 @Entity
-@Component
 @Table(name = "users")
+@Setter
+@Getter
+@ToString
+@RequiredArgsConstructor
 public class User implements UserDetails {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,74 +30,21 @@ public class User implements UserDetails {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column
+    @Column(name = "password")
     private String password;
 
-    @ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
-    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
-
-    public User() {
-    }
-
-    public User(String firstName, String lastName, String email, String password, Set<Role> roles) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.password = password;
-        this.roles = roles;
-    }
-
-    public boolean isAdmin() {
-        for (Role role : roles) {
-            if (Objects.equals(role.getAuthority(), "ROLE_ADMIN")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void setRoles(String roles) {
-        if (roles.contains("ADMIN")) {
-            this.roles.add(new Role("ROLE_ADMIN"));
-        }
-        if (roles.contains("USER")) {
-            this.roles.add(new Role("ROLE_USER"));
-        }
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+    @Fetch(FetchMode.JOIN)
+    @ManyToMany
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Collection<Role> roles;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
     }
 
     @Override
@@ -120,26 +72,7 @@ public class User implements UserDetails {
         return true;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", password='" + password + '\'' +
-                ", roles=" + roles +
-                '}';
+    public String getShortRole() {
+        return roles.toString().substring(1, roles.toString().length() - 1);
     }
 }

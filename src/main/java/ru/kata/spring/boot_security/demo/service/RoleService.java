@@ -1,11 +1,8 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import ru.kata.spring.boot_security.demo.model.Role;
-
-import javax.transaction.Transactional;
-import java.util.Set;
+import java.util.List;
 
 public interface RoleService {
-    @Transactional
-    Set<Role> findAllRoles();
+    List<Role> getAllRoles();
 }
